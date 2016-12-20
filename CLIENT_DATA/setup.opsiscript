@@ -26,6 +26,7 @@ DefVar $Property_DesktopIcon$
 DefVar $CustomPostInstall$
 DefVar $CustomPostDeinstall$
 DefVar $LicenseType$
+DefVar $LicenseFile$
 
 Set $LogDir$               = "%SystemDrive%\tmp"
 Set $msi_name$             = "Citavi5Setup.msi"
@@ -58,9 +59,9 @@ else
 	ShowBitmap "%ScriptPath%\" + $ProductId$ + ".png" $PrettyName$ + " " + $Version$
 	
   if $LicenseType$ = "site-license-file"
-	  if not(FileExists("%ScriptPath%\custom\common.dat4"))
-      LogError "No common.dat4 site license file found in custom folder of this product, though kind-of-license property set to site-license-file. Please copy your common.dat4 file to the custom folder of your opsi server or change the type-of-license property to testversion."
-      isFatalError "No common.dat4 license file found in custom folder, though kind-of-license property set to site-license-file" 
+	  if not(FileExists("%ScriptPath%\custom\common.dat4")) AND not(FileExists("%ScriptPath%\custom\common.dat5"))
+      LogError "No common.dat4 or common.dat5 site license file found in custom folder of this product, though kind-of-license property set to site-license-file. Please copy your common.dat4 file to the custom folder of your opsi server or change the type-of-license property to testversion."
+      isFatalError "No common.dat4 or common.dat5 license file found in custom folder, though kind-of-license property set to site-license-file" 
 	  endif
 	endif
 	
@@ -105,5 +106,15 @@ endif
 [Winbatch_install]
 msiexec /i "%ScriptPath%\$msi_name$" /q INSTALLDESKTOPSHORTCUTS=1 INSTALLSTARTMENUSHORTCUTS=1 /l* "$LogDir$\$ProductId$.install_log.txt" ALLUSERS=1 REBOOT=ReallySuppress 
 
+[Sub_copy_license]
+if FileExists("%ScriptPath%\custom\common.dat4")
+	Set $LicenseFile$ = "common.dat4"
+else
+	if FileExists("%ScriptPath%\custom\common.dat5")
+		Set $LicenseFile$ = "common.dat5"
+	endif
+endif
+Files_copy_license
+
 [Files_copy_license]
-copy "%ScriptPath%\custom\common.dat4" "%ProgramFiles32Dir%\Citavi 5\bin"
+copy "%ScriptPath%\custom\$LicenseFile$" "%ProgramFiles32Dir%\Citavi 5\bin"
